@@ -1,16 +1,19 @@
 const GoogleLogin = require('./google-login');
+const AlternativeGoogleLogin = require('./alternative-login');
 
 class AutomationFramework {
   constructor() {
     this.googleLogin = new GoogleLogin();
+    this.altLogin = new AlternativeGoogleLogin();
+    this.currentLogin = null;
   }
 
   async start() {
     console.log('🚀 Google Otomasyon Aracı Başlatılıyor...\n');
 
     try {
-      // Tarayıcıyı başlat
-      await this.googleLogin.init();
+      // Giriş yöntemi seç
+      await this.selectLoginMethod();
 
       // Ana menü
       await this.showMainMenu();
@@ -18,7 +21,49 @@ class AutomationFramework {
     } catch (error) {
       console.error('❌ Hata:', error.message);
     } finally {
-      await this.googleLogin.close();
+      if (this.currentLogin) {
+        await this.currentLogin.close();
+      }
+    }
+  }
+
+  async selectLoginMethod() {
+    const inquirer = await import('inquirer');
+    
+    const { method } = await inquirer.default.prompt([
+      {
+        type: 'list',
+        name: 'method',
+        message: 'Hangi giriş yöntemini kullanmak istiyorsunuz?',
+        choices: [
+          { name: '🤖 Otomatik giriş (varsayılan)', value: 'auto' },
+          { name: '👤 Manuel giriş (güvenli)', value: 'manual' },
+          { name: '🐌 Yavaş giriş (bot tespiti için)', value: 'slow' },
+          { name: '🔵 OAuth2 giriş', value: 'oauth' }
+        ]
+      }
+    ]);
+
+    switch (method) {
+      case 'auto':
+        this.currentLogin = this.googleLogin;
+        await this.currentLogin.init();
+        break;
+      case 'manual':
+      case 'slow':
+      case 'oauth':
+        this.currentLogin = this.altLogin;
+        await this.currentLogin.init();
+        break;
+    }
+
+    // Seçilen yöntemle giriş yap
+    if (method === 'manual') {
+      await this.currentLogin.manualLogin();
+    } else if (method === 'slow') {
+      await this.currentLogin.slowLogin();
+    } else if (method === 'oauth') {
+      await this.currentLogin.oauth2Login();
     }
   }
 
@@ -49,9 +94,13 @@ class AutomationFramework {
 
       switch (action) {
         case 'login':
-          const loginSuccess = await this.googleLogin.login();
-          if (loginSuccess) {
-            console.log('Giriş başarılı! Şimdi diğer servislere gidebilirsiniz.');
+          if (this.currentLogin === this.googleLogin) {
+            const loginSuccess = await this.currentLogin.login();
+            if (loginSuccess) {
+              console.log('Giriş başarılı! Şimdi diğer servislere gidebilirsiniz.');
+            }
+          } else {
+            console.log('Alternatif giriş yöntemi zaten seçildi.');
           }
           break;
 
@@ -61,12 +110,20 @@ class AutomationFramework {
         case 'calendar':
         case 'docs':
         case 'sheets':
-          await this.googleLogin.navigateToService(action);
+          await this.currentLogin.navigateToService(action);
           break;
 
         case 'screenshot':
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-          await this.googleLogin.takeScreenshot(`screenshot-${timestamp}.png`);
+          if (this.currentLogin.takeScreenshot) {
+            await this.currentLogin.takeScreenshot(`screenshot-${timestamp}.png`);
+          } else {
+            await this.currentLogin.page.screenshot({ 
+              path: `screenshot-${timestamp}.png`, 
+              fullPage: true 
+            });
+            console.log(`Ekran görüntüsü alındı: screenshot-${timestamp}.png`);
+          }
           break;
 
         case 'custom':
@@ -111,7 +168,7 @@ class AutomationFramework {
         ]);
         
         console.log(`${url} adresine gidiliyor...`);
-        await this.googleLogin.page.goto(url, { waitUntil: 'networkidle' });
+        await this.currentLogin.page.goto(url, { waitUntil: 'networkidle' });
         console.log('✅ Sayfa yüklendi');
         break;
 
@@ -132,13 +189,13 @@ class AutomationFramework {
 
       case 'refresh':
         console.log('Sayfa yenileniyor...');
-        await this.googleLogin.page.reload({ waitUntil: 'networkidle' });
+        await this.currentLogin.page.reload({ waitUntil: 'networkidle' });
         console.log('✅ Sayfa yenilendi');
         break;
 
       case 'back':
         console.log('Geri gidiliyor...');
-        await this.googleLogin.page.goBack({ waitUntil: 'networkidle' });
+        await this.currentLogin.page.goBack({ waitUntil: 'networkidle' });
         console.log('✅ Geri gidildi');
         break;
     }
