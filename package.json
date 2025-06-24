@@ -1,0 +1,23 @@
+{
+  "name": "google-automation",
+  "version": "1.0.0",
+  "description": "Google hesap otomasyonu için güvenli web otomasyon aracı",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node src/test.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "dotenv": "^16.3.1",
+    "inquirer": "^9.2.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0"
+  },
+  "keywords": ["automation", "google", "login", "playwright"],
+  "author": "",
+  "license": "MIT"
+}
