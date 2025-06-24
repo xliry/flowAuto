@@ -1,5 +1,5 @@
 require('dotenv').config();
-const inquirer = require('inquirer');
+// const inquirer = require('inquirer'); // Remove old require
 
 class CredentialManager {
   constructor() {
@@ -23,7 +23,8 @@ class CredentialManager {
 
     // Manuel giriş iste
     console.log('Google hesap bilgilerinizi girin:');
-    const answers = await inquirer.prompt([
+    const inquirer = await import('inquirer');
+    const answers = await inquirer.default.prompt([
       {
         type: 'input',
         name: 'email',

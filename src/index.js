@@ -1,5 +1,4 @@
 const GoogleLogin = require('./google-login');
-const inquirer = require('inquirer');
 
 class AutomationFramework {
   constructor() {
@@ -24,10 +23,11 @@ class AutomationFramework {
   }
 
   async showMainMenu() {
+    const inquirer = await import('inquirer');
     while (true) {
       console.log('\n=== ANA MENÜ ===');
       
-      const { action } = await inquirer.prompt([
+      const { action } = await inquirer.default.prompt([
         {
           type: 'list',
           name: 'action',
@@ -84,7 +84,8 @@ class AutomationFramework {
   }
 
   async handleCustomAction() {
-    const { customAction } = await inquirer.prompt([
+    const inquirer = await import('inquirer');
+    const { customAction } = await inquirer.default.prompt([
       {
         type: 'list',
         name: 'customAction',
@@ -100,7 +101,7 @@ class AutomationFramework {
 
     switch (customAction) {
       case 'goto_url':
-        const { url } = await inquirer.prompt([
+        const { url } = await inquirer.default.prompt([
           {
             type: 'input',
             name: 'url',
@@ -115,7 +116,7 @@ class AutomationFramework {
         break;
 
       case 'wait':
-        const { waitTime } = await inquirer.prompt([
+        const { waitTime } = await inquirer.default.prompt([
           {
             type: 'number',
             name: 'waitTime',
